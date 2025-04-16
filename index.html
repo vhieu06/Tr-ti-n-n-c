@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Thành viên</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f2f4f8;
+      margin: 0;
+      padding: 30px;
+      display: flex;
+      flex-direction: row;
+      gap: 40px;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    #memberList {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 15px;
+    }
+
+    li {
+      background-color: white;
+      padding: 15px 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    li:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+      background-color: #e6f7ff;
+    }
+
+    .history {
+      width: 300px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      max-height: 600px;
+    }
+
+    .history h3 {
+      margin-top: 0;
+      font-size: 18px;
+      color: #444;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+    }
+
+    .history ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+
+    .history li {
+      font-size: 14px;
+      margin-bottom: 8px;
+      border-bottom: 1px dashed #ddd;
+      padding-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .filter-buttons {
+      margin-bottom: 10px;
+    }
+
+    .filter-buttons button {
+      margin-right: 5px;
+      padding: 6px 12px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+
+    .filter-buttons button:hover {
+      background-color: #0056b3;
+    }
+
+    .delete-button {
+      margin-top: 10px;
+    }
+
+    .delete-button button {
+      padding: 6px 12px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .delete-button button:hover {
+      background-color: #b52a37;
+    }
+
+    .delete-individual-button {
+      background-color: #ffc107;
+      color: black;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .delete-individual-button:hover {
+      background-color: #e0a800;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Trả tiền nước</h2>
+    <ul id="memberList"></ul>
+  </div>
+
+  <div class="history">
+    <h3>Lịch sử cập nhật</h3>
+    <div class="filter-buttons">
+      <button onclick="setHistoryFilter('all')">Tất cả</button>
+      <button onclick="setHistoryFilter(1)">1 tháng</button>
+      <button onclick="setHistoryFilter(2)">2 tháng</button>
+      <button onclick="setHistoryFilter(3)">3 tháng</button>
+    </div>
+    <div class="delete-button">
+      <button onclick="clearHistory()">🗑️ Xoá lịch sử cập nhật</button>
+    </div>
+    <ul id="historyList"></ul>
+  </div>
+
+  <script>
+    const memberListEl = document.getElementById('memberList');
+    const historyListEl = document.getElementById('historyList');
+
+    const defaultMembers = [
+      { name: "Hiệp", date: "2025-04-16" },
+      { name: "Thành", date: "2025-04-17" },
+      { name: "Dương", date: "2025-04-18" },
+      { name: "Tuấn Anh", date: "2025-04-19" },
+      { name: "Phước", date: "2025-04-20" },
+      { name: "Huy", date: "2025-04-21" },
+      { name: "Tân", date: "2025-04-22" },
+      { name: "Hiếu", date: "2025-04-23" }
+    ];
+
+    function loadMembers() {
+      const saved = localStorage.getItem('members');
+      return saved ? JSON.parse(saved) : defaultMembers;
+    }
+
+    function saveMembers(members) {
+      localStorage.setItem('members', JSON.stringify(members));
+    }
+
+    function loadHistory() {
+      const saved = localStorage.getItem('history');
+      const fullHistory = saved ? JSON.parse(saved) : [];
+
+      const now = new Date();
+      const cutoff = new Date();
+      cutoff.setMonth(now.getMonth() - 2);
+
+      const filtered = fullHistory.filter(entry => {
+        const entryDate = new Date(entry.date);
+        return entryDate >= cutoff;
+      });
+
+      localStorage.setItem('history', JSON.stringify(filtered));
+
+      return filtered;
+    }
+
+    function saveHistory(history) {
+      localStorage.setItem('history', JSON.stringify(history));
+    }
+
+    function renderMembers(members) {
+      memberListEl.innerHTML = '';
+      members.forEach(m => {
+        const li = document.createElement('li');
+        li.textContent = m.name;
+        li.dataset.member = m.name;
+        li.dataset.date = m.date;
+        memberListEl.appendChild(li);
+      });
+    }
+
+    let historyFilter = 2;
+
+    function setHistoryFilter(months) {
+      historyFilter = months;
+      renderHistory(history);
+    }
+
+    function renderHistory(history) {
+      historyListEl.innerHTML = '';
+
+      const now = new Date();
+
+      history
+        .filter(entry => {
+          if (historyFilter === 'all') return true;
+          const entryDate = new Date(entry.date);
+          const cutoff = new Date();
+          cutoff.setMonth(now.getMonth() - historyFilter);
+          return entryDate >= cutoff;
+        })
+        .forEach((entry, index) => {
+          const li = document.createElement('li');
+          li.innerHTML = `${entry.member}: ${entry.date} <button class="delete-individual-button" onclick="deleteEntry(${index})">Xoá</button>`;
+          historyListEl.appendChild(li);
+        });
+    }
+
+    function deleteEntry(index) {
+      history.splice(index, 1);
+      saveHistory(history);
+      renderHistory(history);
+    }
+
+    function clearHistory() {
+      const confirmDelete = confirm("Bạn có chắc chắn muốn xoá toàn bộ lịch sử cập nhật?");
+      if (confirmDelete) {
+        history = [];
+        saveHistory(history);
+        renderHistory(history);
+      }
+    }
+
+    // Load dữ liệu
+    let members = loadMembers();
+    let history = loadHistory();
+
+    renderMembers(members);
+    renderHistory(history);
+
+    // Bấm vào tên để cập nhật ngày
+    memberListEl.addEventListener('click', function (e) {
+      if (e.target.tagName === 'LI') {
+        const li = e.target;
+        const member = li.dataset.member;
+        const currentDate = li.dataset.date;
+
+        const input = prompt(`Nhập ngày mới cho ${member} (yyyy-mm-dd):`, currentDate);
+
+        if (input) {
+          const newDate = new Date(input);
+          if (!isNaN(newDate.getTime())) {
+            const formatted = newDate.toISOString().split('T')[0];
+
+            members = members.filter(m => m.name !== member);
+            members.push({ name: member, date: formatted });
+
+            saveMembers(members);
+
+            history.push({ member, date: formatted });
+            saveHistory(history);
+
+            renderMembers(members);
+            renderHistory(history);
+          } else {
+            alert("Ngày không hợp lệ. Vui lòng nhập đúng định dạng yyyy-mm-dd.");
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
